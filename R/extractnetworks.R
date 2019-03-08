@@ -34,8 +34,8 @@ countrynames <- unique(gadm@data$GID_0)
 
 for (c in countrynames){
   
-  #Run only for countries with PAs
-  if(any(pas@data$ISO3==c)){
+  #Run only for countries with PAs and avoid ANT (antartica)
+  if(any(pas@data$ISO3==c & c != "ATA")){
   
     print(paste("Extracting networks for ",c,sep=""))
     
@@ -54,14 +54,22 @@ for (c in countrynames){
     countrans <- subset(gadmbuffer, GID_0==c)
     # Merge PAs of target period with till date
     alldatespas <- bind(pas,pastilldate)
-    # Select PAs included in countrans
-    transbound <- intersect(alldatespas,countrans)
     # But excluding the country PAs
-    transbound <- subset(transbound, ISO3!=c)
-    # Adds attribute column (equal to zero)
-    transbound@data$attribute <- rep(0,nrow(transbound@data))
-    # Leaves only attribute column
-    transbound <- transbound[,-(1:6)]
+    alldatespas <- subset(alldatespas, ISO3!=c)
+    
+    # Select PAs included in countrans
+    # Here we use the overlay function to detect the polygons that overlay with 500km boundary (gives pol index)
+    paswithin <- over(alldatespas,geometry(countrans))
+    # Subsets to the polygons within the boundary
+    transbound <- alldatespas[which(!is.na(paswithin)),]
+    
+    # In case there are no countries around, we still need transbound (with 0 polygons)
+    if(!is.null(transbound@data$ISO3)){
+      # Adds attribute column (equal to zero)
+      transbound@data$attribute <- rep(0,nrow(transbound@data))
+      # Leaves only attribute column
+      transbound <- transbound[,-(1:2)]
+    }
     
     # 3.1.3 Extract land portions and add 0 attribute
     counland <- subset(gadmmulti, GID_0==c)
@@ -75,9 +83,32 @@ for (c in countrynames){
     firstnet <- rbind(counpas,transbound,counland)
     firstnet@data$ID <- seq(1,nrow(firstnet@data))
     
-    # 3.1.5 Writes to shapefile to disk
-    writeOGR(obj=firstnet, dsn=OUTfolder, layer=paste(c,"firstnetwork",sep=""), driver="ESRI Shapefile",
-             overwrite_layer = TRUE)
+    
+    
+    # 3.1.5 Calculate distance between edges of polygons
+    # 3.1.5.1 Reproject to azimuthal equidistant proj to calculate distances
+    # Calculate centroid of country
+    centroid <- gCentroid(counland)
+    # crs with country centroid as map center
+    crs_coun <- paste(paste("+proj=laea +x_0=0 +y_0=0 +lon_0=",centroid@coords[1],sep=""),
+                      " +lat_0=",centroid@coords[2],sep="")
+    firstnet_laea <- spTransform(firstnet, CRS(crs_coun))
+    
+    # 3.1.X Writes to shapefile to disk
+    writeOGR(obj=firstnet_laea, dsn=OUTfolder, layer=paste(c,"firstnetwork",sep=""), driver="ESRI Shapefile",
+            overwrite_layer = TRUE)
+    
+    
+    #3.1.5.2 Calculate distances
+    #distances <- gDistance(firstnet_laea, byid=TRUE)
+    
+    
+    #3.1.6 Transform to obtain CONEFOR formatting tables
+    #dist_table <- as.data.frame(as.table(distances))
+    
+    
+    
+    
     
     # !!! Writting gives a warning, but is an unnecessary one (known issue): https://trac.osgeo.org/gdal/ticket/6803
     
@@ -90,8 +121,10 @@ for (c in countrynames){
     secondnet <- rbind(counpas,transbound)
     secondnet@data$ID <- seq(1,nrow(secondnet@data))
     
+    secondnet_laea <- spTransform(secondnet, CRS(crs_coun))
+    
     # 3.1.5 Writes to shapefile to disk
-    writeOGR(obj=secondnet, dsn=OUTfolder, layer=paste(c,"secondnetwork",sep=""), driver="ESRI Shapefile",
+    writeOGR(obj=secondnet_laea, dsn=OUTfolder, layer=paste(c,"secondnetwork",sep=""), driver="ESRI Shapefile",
              overwrite_layer = TRUE)
   
   
