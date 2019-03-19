@@ -121,8 +121,9 @@ for (c in countrynames){
     dist_table$Var2 <- as.numeric(as.character(dist_table$Var2))
     
     # 3.1.7 Writes attribute text file to disk
+    att_table <- cbind(as.numeric(rownames(firstnet_laea@data)),firstnet_laea@data)
     namepath <- paste(OUTconeforRfolder,paste(paste("attributes/",c,sep=""),"firstnetworkatt.txt",sep=""),sep="")
-    write.table(as.numeric(rownames(firstnet_laea@data)), namepath, col.names=FALSE, row.names=FALSE)
+    write.table(att_table, namepath, col.names=FALSE, row.names=FALSE)
     
     # 3.1.7 Writes distance text file to disk
     namepath <- paste(OUTconeforRfolder,paste(paste("distances/",c,sep=""),"firstnetworkdis.txt",sep=""),sep="")
