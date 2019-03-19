@@ -16,6 +16,7 @@ library(raster)
 # 0. FUNCTIONS
 # PCfun calculates PC using conefor software
 coneforpath <- paste(getwd(),"coveforLinux64.exe",sep="")
+
 PCfun <- function(attfile, disfile){
   
   #system("/home/lcarrasco/Documents/research/protectedareas/PACCproject/coneforLinux64.exe")
