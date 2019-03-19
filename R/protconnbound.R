@@ -73,7 +73,7 @@ for (c in countrynames){
     areatable <- read.table(attfile1st)
     protarea <- sum(areatable[,2])
       
-    protconnbound <- protarea - protunconndes
+    protconnbound <- (protarea/countryarea) - protunconndes
     
     countrynamesvec <- append(countrynamesvec, c) 
     protconnboundvec <- append(protconnboundvec, protconnbound)
@@ -86,4 +86,4 @@ protconnboundtable <- data.frame(countrynamesvec,protconnboundvec)
 colnames(protconnboundtable) <- c("country","protconnbound")
 
 #write.table(protconnboundtable, "/home/lcarrasco/Documents/research/protectedareas/connectivity/results/protconnboundtable.txt",
-            row.names = F, col.names = F)
+ #           row.names = F, col.names = F)
