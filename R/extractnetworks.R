@@ -15,7 +15,8 @@ library(raster)
 INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
 INpasfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA/'
 
-OUTfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks/'
+OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks/'
+OUTconeforRfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_r/'
 
 # 2. READ DATA
 #gadm <- readOGR(INgadmfolder, 'gadm36_0_simplify')
@@ -64,7 +65,7 @@ for (c in countrynames){
     transbound <- alldatespas[which(!is.na(paswithin)),]
     
     # In case there are no countries around, we still need transbound (with 0 polygons)
-    if(!is.null(transbound@data$ISO3)){
+    if(length(transbound@polygons)!=0){
       # Adds attribute column (equal to zero)
       transbound@data$attribute <- rep(0,nrow(transbound@data))
       # Leaves only attribute column
@@ -80,9 +81,15 @@ for (c in countrynames){
     
     
     # 3.1.4 Merges all polygons of first network and adds polygon ID
-    firstnet <- rbind(counpas,transbound,counland)
-    firstnet@data$ID <- seq(1,nrow(firstnet@data))
+    firstnet <- rbind(counpas,transbound,counland, makeUniqueIDs = TRUE)
+    #firstnet@data$ID <- seq(1,nrow(firstnet@data))
     
+    
+    
+    # 3.1.X Writes  shapefile to disk
+    #writeOGR(obj=firstnet_laea, dsn=OUTnetworkfolder, layer=paste(c,"firstnetwork",sep=""), driver="ESRI Shapefile",
+    #       overwrite_layer = TRUE)
+    # !!! Writting gives a warning, but is an unnecessary one (known issue): https://trac.osgeo.org/gdal/ticket/6803
     
     
     # 3.1.5 Calculate distance between edges of polygons
@@ -94,23 +101,35 @@ for (c in countrynames){
                       " +lat_0=",centroid@coords[2],sep="")
     firstnet_laea <- spTransform(firstnet, CRS(crs_coun))
     
-    # 3.1.X Writes to shapefile to disk
-    writeOGR(obj=firstnet_laea, dsn=OUTfolder, layer=paste(c,"firstnetwork",sep=""), driver="ESRI Shapefile",
-            overwrite_layer = TRUE)
     
+    # 3.1.5.2 Calculate distances
+    # Assignes ID value to polygon rowname
+    #rownames(firstnet_laea@data) <- firstnet_laea@data$ID #doesnt work
     
-    #3.1.5.2 Calculate distances
     #distances <- gDistance(firstnet_laea, byid=TRUE)
-    
+    distances <- gDistance(firstnet_laea, byid=TRUE)
     
     #3.1.6 Transform to obtain CONEFOR formatting tables
-    #dist_table <- as.data.frame(as.table(distances))
+    dist_table <- as.data.frame(as.table(distances))
+    # Clean table: 1) Delete self distance
+    dist_table <- dist_table[dist_table$Var1!=dist_table$Var2,]
+    # 2) Delete duplicated row with inverted order of polygons
+    table.sort = t(apply(dist_table, 1, sort))
+    dist_table <- dist_table[!duplicated(table.sort),]
+    # 3) Convert ids to numeric 
+    dist_table$Var1 <- as.numeric(as.character(dist_table$Var1))
+    dist_table$Var2 <- as.numeric(as.character(dist_table$Var2))
+    
+    # 3.1.7 Writes attribute text file to disk
+    namepath <- paste(OUTconeforRfolder,paste(paste("attributes/",c,sep=""),"firstnetworkatt.txt",sep=""),sep="")
+    write.table(as.numeric(rownames(firstnet_laea@data)), namepath, col.names=FALSE, row.names=FALSE)
+    
+    # 3.1.7 Writes distance text file to disk
+    namepath <- paste(OUTconeforRfolder,paste(paste("distances/",c,sep=""),"firstnetworkdis.txt",sep=""),sep="")
+    write.table(dist_table, namepath, col.names=FALSE, row.names=FALSE)
     
     
-    
-    
-    
-    # !!! Writting gives a warning, but is an unnecessary one (known issue): https://trac.osgeo.org/gdal/ticket/6803
+    #ncol(combn(seq(1:length(firstnet[1:5,])),2))
     
     
     # 3.2 Create Second network dataset.
@@ -121,13 +140,30 @@ for (c in countrynames){
     secondnet <- rbind(counpas,transbound)
     secondnet@data$ID <- seq(1,nrow(secondnet@data))
     
-    secondnet_laea <- spTransform(secondnet, CRS(crs_coun))
+    #secondnet_laea <- spTransform(secondnet, CRS(crs_coun))
     
-    # 3.1.5 Writes to shapefile to disk
-    writeOGR(obj=secondnet_laea, dsn=OUTfolder, layer=paste(c,"secondnetwork",sep=""), driver="ESRI Shapefile",
-             overwrite_layer = TRUE)
+    # 3.2.X Writes to shapefile to disk
+    #writeOGR(obj=secondnet_laea, dsn=OUTfolder, layer=paste(c,"secondnetwork",sep=""), driver="ESRI Shapefile",
+     #        overwrite_layer = TRUE)
   
-  
+    
+    
+    
+    # 3.2.3 Writes attribute text file to disk
+    namepath <- paste(OUTconeforRfolder,paste(paste("attributes/",c,sep=""),"secondnetworkatt.txt",sep=""),sep="")
+    write.table(as.numeric(rownames(secondnet@data)), namepath, col.names=FALSE, row.names=FALSE)
+    
+    
+    
+    # 3.1.7 Writes distance text file to disk
+    # We don't wont to repeat gdistance, so we just delete the distances involving counland polygons
+    dist_table2nd <- dist_table[!(dist_table$Var1 %in% as.numeric(rownames(counland@data))) 
+                                & !(dist_table$Var2 %in% as.numeric(rownames(counland@data))),]
+    
+    # Writing
+    namepath <- paste(OUTconeforRfolder,paste(paste("distances/",c,sep=""),"secondnetworkdis.txt",sep=""),sep="")
+    write.table(dist_table2nd, namepath, col.names=FALSE, row.names=FALSE)
+    
   }
 }
 
