@@ -102,12 +102,22 @@ for (c in countrynames){
     firstnet_laea <- spTransform(firstnet, CRS(crs_coun))
     
     
-    # 3.1.5.2 Calculate distances
-    # Assignes ID value to polygon rowname
-    #rownames(firstnet_laea@data) <- firstnet_laea@data$ID #doesnt work
+    ###test fast gdistance###
+    combns <- t(combn(length(testcountry),2))
+    net_split <- split(testcountry, seq_len(length(testcountry))) 
+    dists <- apply(combns,1,function(x)
+      gDistance(net_split[[x[1]]], net_split[[x[2]]]))
     
-    #distances <- gDistance(firstnet_laea, byid=TRUE)
-    distances <- gDistance(firstnet_laea, byid=TRUE)
+    dist_table <- cbind.data.frame(from=row.names(testcountry@data)[combns[, 1]], 
+                                         to=row.names(testcountry@data)[combns[, 2]], 
+                                         d=dists)
+    
+    
+    
+    # 3.1.5.2 Calculate distances
+
+    
+    distances <- gDistance(firstnet_laea2, byid=TRUE)
     
     #3.1.6 Transform to obtain CONEFOR formatting tables
     dist_table <- as.data.frame(as.table(distances))
