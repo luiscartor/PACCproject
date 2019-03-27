@@ -15,11 +15,11 @@ library(raster)
 
 # 0. FUNCTIONS
 # PCfun calculates PC using conefor software
-coneforpath <- paste(getwd(),"coveforLinux64.exe",sep="")
+coneforpath <- paste(getwd(),"/coneforLinux64",sep="")
 
 PCfun <- function(attfile, disfile){
   
-  #system("/home/lcarrasco/Documents/research/protectedareas/PACCproject/coneforLinux64.exe")
+  #system("/home/lcarrasco/Documents/research/protectedareas/PACCproject/coneforLinux64")
   
   command <- paste(coneforpath,"-nodeFile", attfile,"-conFile",disfile, "-t dist all -confProb 200 0.5 -PC onlyoverall", collapse = ' ')
   system(command)
@@ -29,6 +29,8 @@ PCfun <- function(attfile, disfile){
 # 1. INPUTS
 INattfolder <- "/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_r/attributes/"
 INdisfolder <- "/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_r/distances/"
+INattfolder <- "/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_qgis/attribute/"
+INdisfolder <- "/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_qgis/distances/"
 
 
 
@@ -53,15 +55,15 @@ for (c in countrynames){
   if(file.exists(paste(INattfolder,c,"firstnetworkatt.txt",sep = ""))){
   
     # 3.1 Read network conefor files
-    attfile1st <- paste(INattfolder,c,"firstnetworkatt.txt",sep = "")
-    disfile1st <- paste(INdisfolder,c,"firstnetworkdis.txt",sep = "")
+    attfile1st <- paste(INattfolder,c,"firstnetworka.txt",sep = "")
+    disfile1st <- paste(INdisfolder,c,"firstnetworkd.txt",sep = "")
     attfile2nd <- paste(INattfolder,c,"secondnetworkatt.txt",sep = "")
     disfile2nd <- paste(INdisfolder,c,"secondnetworkdis.txt",sep = "")
     
     # 3.2 Calculates PC (probability of connectivity) index with conefor for both networks
     
     PC1st <- PCfun(attfile1st,disfile1st)
-    PC2nd <- PCfun(attfile1st,disfile1st)
+    PC2nd <- PCfun(attfile2nd,disfile2nd)
     
     # 3.3 Calculates ProtUnconn[Design] (Saura 2018 Appendix B.3)
     # Needs country area
