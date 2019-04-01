@@ -51,6 +51,16 @@ pastilldate <- shapefile('C:\\Users\\lcarrasc\\Documents\\research\\protectedare
 
 
 # 3. MAIN ROUTINE
+
+# 3.1 Calculate PC index for all networks
+shell(paste(INfolder,"-nodeFile nodes_ -conFile distances_ -t dist notall -* -confProb 10000 0.5 -PC onlyoverall", collapse = ' '))
+
+# Read PC index results from conefor created file
+pctable <- read.table(paste(INfolder,"results_all_EC(PC).txt",sep = ""))
+
+
+# 3.2 Calculate ProtConn bound: looping through all countries
+
 countrynamesvec <- c()
 protconnboundvec <- c()
 # 3.0 Obtain number of countries and create loop
@@ -58,13 +68,9 @@ countrynames <- unique(gadm@data$GID_0)
 
 for (c in countrynames){
   #Run only for countries with PAs and avoid ANT (antartica)
-  if(file.exists(paste(INattfolder,c,"firstnetworkatt.txt",sep = ""))){
+  if(paste(c,"firstnetwork.txt",sep = "") %in% pctable$V1){
   
-    # 3.1 Read network conefor files
-    #attfile1st <- paste(INattfolder,c,"firstnetworka.txt",sep = "")
-    #disfile1st <- paste(INdisfolder,c,"firstnetworkd.txt",sep = "")
-    #attfile2nd <- paste(INattfolder,c,"secondnetworkatt.txt",sep = "")
-    #disfile2nd <- paste(INdisfolder,c,"secondnetworkdis.txt",sep = "")
+    
     
     attfile1st <- paste(INfolder,"nodes_",c,"firstnetwork.txt",sep = "",collapse = "")
     disfile1st <- paste(INfolder,"distances_",c,"firstnetwork.txt",sep = "",collapse = "")
@@ -81,14 +87,14 @@ for (c in countrynames){
     countryarea <- area(subset(gadm, GID_0==c))
     
     protunconndes <- (100*(PC1st/countryarea)) - (100*(PC2nd/countryarea))
-    protunconndes <- (100*(26000000/countryarea)) - (100*(PC2nd/countryarea))
-    
+    protunconndes <- (100*(82397800000/countryarea)) - (100*(31518700000/countryarea))
+
     # 3.4 Calculates ProtConnBound; ProtConnBound=Prot−ProtUnconn[Design]
     # Needs the total protected area of considered dataset
     areatable <- read.table(attfile1st)
     protarea <- sum(areatable[,2])
       
-    protconnbound <- (protarea/countryarea) - protunconndes
+    protconnbound <- 100*(protarea/countryarea) - protunconndes
     
     countrynamesvec <- append(countrynamesvec, c) 
     protconnboundvec <- append(protconnboundvec, protconnbound)
