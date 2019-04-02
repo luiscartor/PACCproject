@@ -27,7 +27,7 @@ PCfun <- function(attfile, disfile, countrycode){
 setwd("C:\\Users\\lcarrasc\\Documents\\research\\protectedareas\\analysis\\connectivity\\conefor_inputs_arcgis_fortest\\")
 
 # Output file name
-outFile <- "protconnbound_till2010.txt"
+OUTfile <- "/protconnbound_till2010.txt"
 
 
 
@@ -44,7 +44,7 @@ system(coneforpath)
 shell(paste(coneforpath,"-nodeFile nodes_ -conFile distances_ -t dist notall -* -confProb 10000 0.5 -PC onlyoverall", collapse = ' '))
 
 # Read PC index results from conefor created file
-pctable <- read.table(paste(INfolder,"results_all_EC(PC).txt",sep = ""))
+pctable <- read.table(paste(getwd(),"\\results_all_EC(PC).txt",sep = ""))
 
 
 # 3.2 Calculate ProtConn bound: looping through all countries
@@ -92,7 +92,7 @@ for (c in countrynames){
 protconnboundtable <- data.frame(countrynamesvec,protconnboundvec,protvec,countryareavec)
 colnames(protconnboundtable) <- c("country","protconnbound","prot","countryarea")
 
-write.table(protconnboundtable, paste(getwd,OUTfile,sep=""),
-            row.names = F, col.names = F)
+write.table(protconnboundtable, paste(getwd(),OUTfile,sep=""),
+            row.names = F, col.names = T)
 
 
