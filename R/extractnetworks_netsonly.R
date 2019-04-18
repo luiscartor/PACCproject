@@ -12,22 +12,28 @@ library(raster)
 
 # 1. INPUTS
 # Read country boundaries data (each piece of land is a different feature)
-INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
-INpasfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA/'
+#INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
+#INpasfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA/'
 
-OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks_till2011/'
-#OUTconeforRfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_r/'
+INpasfile <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA_under1km/WDPA_cleaned_till2010_final'
+
+OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks_till2010_500km/'
+
 
 # 2. READ DATA
-#gadm <- readOGR(INgadmfolder, 'gadm36_0_simplify')
+# Read country boundaries data (each piece of land is a different feature)
 gadm <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_simplify')
 gadmmulti <-shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_multipart')
 gadmbuffer <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_500kmbuffer')
-#pas <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/WDPA/WDPA_2011on_final')
 
-pastilldate <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/WDPA/WDPA_till2010_final')
+
+pas <- shapefile(INpasfile)
+
 
 # 3. MAIN ROUTINE
+
+pas@data$area <- area(pas)
+pas <- subset(pas,area>=1000000)
 
 # 3.0 Obtain number of countries and create loop
 countrynames <- unique(gadm@data$GID_0)
@@ -36,7 +42,7 @@ countrynames <- unique(gadm@data$GID_0)
 for (c in countrynames){
   
   #Run only for countries with PAs and avoid ANT (antartica)
-  if(any(pastilldate@data$ISO3==c & c != "ATA")){
+  if(any(pas@data$ISO3==c & c != "ATA")){
   
     print(paste("Extracting networks for ",c,sep=""))
     
@@ -45,31 +51,59 @@ for (c in countrynames){
     # with attribute equal zero, and all the land portions of the country.
     
     # 3.1.1 Extracts country pas and add area
-    counpas <- subset(pastilldate, ISO3==c)
+    counpas <- subset(pas, ISO3==c)
+    # Dissolve polygons avoiding overlap
+    #counpas <- aggregate(counpas,by="ISO3",dissolve=TRUE)
+    # Disaggregate so that we have multiple features
+    #counpas <- disaggregate(counpas)
     # Adds attribute (area) column
-    counpas@data$attribute <- area(counpas)
+    counpas@data$attribute <- counpas@data$area
+    # Delete areas < 1km2, in case some small polygons were created after dissolving/cleaning
+    #counpas <- subset(counpas,attribute>=1000000)
+    # Skip country (leave loop) if no areas > 1km
+    #if(length(counpas@polygons)==0){
+    #  print(paste("No PAs > 1km2 for ",c,sep=""))
+    #  next
+    #}
+    
+    # Clip to country to avoid sea areas
+    #counlimits <- subset(gadm, GID_0==c)
+    #counpas2 <- gIntersection(counpas, counlimits, byid=TRUE)
+    
+    
     # Leaves only attribute column
-    counpas <- counpas[,-(1:2)]
+    counpas <- counpas[,-(1:3)]
     
     # 3.1.2 Extract transboundary pas and add 0 attribute
     countrans <- subset(gadmbuffer, GID_0==c)
-    # Merge PAs of target period with till date
-    #alldatespas <- bind(pas,pastilldate)
+
+
     # But excluding the country PAs
-    pasoutside <- subset(pastilldate, ISO3!=c)
+    pasoutside <- subset(pas, ISO3!=c)
+    
     
     # Select PAs included in countrans
     # Here we use the overlay function to detect the polygons that overlay with 500km boundary (gives pol index)
     paswithin <- over(pasoutside,geometry(countrans))
+    
     # Subsets to the polygons within the boundary
     transbound <- pasoutside[which(!is.na(paswithin)),]
     
+    # Dissolve polygons avoiding overlap
+    #transbound <- aggregate(transbound,by="ISO3",dissolve=TRUE)
+    # Disaggregate so that we have multiple features
+    #transbound <- disaggregate(transbound)
+    
+    
     # In case there are no countries around, we still need transbound (with 0 polygons)
     if(length(transbound@polygons)!=0){
+      # We want to avoid areas < 1sqr km
+      #transbound@data$area <- area(transbound)
+      #transbound <- subset(transbound,area>=1000000)
       # Adds attribute column (equal to zero)
       transbound@data$attribute <- rep(0,nrow(transbound@data))
       # Leaves only attribute column
-      transbound <- transbound[,-(1:2)]
+      transbound <- transbound[,-(1:3)]
     }
     
     # 3.1.3 Extract land portions and add 0 attribute
@@ -99,7 +133,6 @@ for (c in countrynames){
            overwrite_layer = TRUE)
     # !!! Writting gives a warning, but is an unnecessary one (known issue): https://trac.osgeo.org/gdal/ticket/6803
     
-    
    
     
     # 3.2 Create Second network dataset.
@@ -115,7 +148,6 @@ for (c in countrynames){
     # 3.2.X Writes to shapefile to disk
     writeOGR(obj=secondnet_laea, dsn=OUTnetworkfolder, layer=paste(c,"secondnetwork",sep=""), driver="ESRI Shapefile",
            overwrite_layer = TRUE)
-  
     
     
   }
