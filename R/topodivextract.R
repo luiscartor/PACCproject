@@ -120,6 +120,6 @@ colnames(stats_mat) <- c("country","pamean","pamed","pavar","patot","outpamean",
                         "oldpamean","oldpamed","oldpavar","oldpatot","counmean","counmed","counvar","countot")
 
 # 5 Write data
-outtablename <- paste(OUTtopodivfolder,"PAstopodivtable.txt",sep="")
+outtablename <- paste(OUTtopodivfolder,"PAstopodivtable_simp100.txt",sep="")
 #write.csv2(stats_mat,file = outtablename,row.names=FALSE)
 write.table(stats_mat,file = outtablename, row.names = FALSE)
