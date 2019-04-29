@@ -23,7 +23,7 @@ INtopodivtable <- '/home/lcarrasco/Documents/research/protectedareas/topodiv/PAs
 INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
 INgadmfile <- 'gadm36_0_simplify'
 #INgadmfile <- 'gadm36_0_simplify_robinson_buff0'
-  
+  l
 # 2. READ DATA
 tdivtable <- read.table(INtopodivtable,header = TRUE)
 gadm <- readOGR(INgadmfolder, INgadmfile)
@@ -90,8 +90,8 @@ tdivtable$difpasout_class[tdivtable$difpasout_class < 0 & tdivtable$difpasout_cl
 tdivtable$difpasout_class[tdivtable$difpasout_class < -0.25] <- 1
 tdivtable$difpasout_class <- as.factor(tdivtable$difpasout_class)
 
-tdivtable$difpasout_class <- revalue(tdivtable$difpasout_class, c("4"="Big increase (> 0.3)", "3"="Small increase (< 0.3)",
-                                                                  "2"="Small decrease (< 0.3)", "1"="Big decrease (> 0.3)"))
+tdivtable$difpasout_class <- revalue(tdivtable$difpasout_class, c("4"="Big increase (> 0.25)", "3"="Small increase (< 0.25)",
+                                                                  "2"="Small decrease (< 0.25)", "1"="Big decrease (> 0.25)"))
 outclass_df <- data.frame(table(tdivtable$difpasout_class))
 # Reverse order
 outclass_df <- outclass_df[nrow(outclass_df):1, ]
@@ -120,8 +120,8 @@ tdivtable$difpasout_class[tdivtable$difpasout_class < 0 & tdivtable$difpasout_cl
 tdivtable$difpasout_class[tdivtable$difpasout_class < -0.25] <- 1
 tdivtable$difpasout_class <- as.factor(tdivtable$difpasout_class)
 
-tdivtable$difpasout_class <- revalue(tdivtable$difpasout_class, c("4"="Big increase (> 0.3)", "3"="Small increase (< 0.3)",
-                                                                  "2"="Small decrease (< 0.3)", "1"="Big decrease (> 0.3)"))
+tdivtable$difpasout_class <- revalue(tdivtable$difpasout_class, c("4"="Big increase (> 0.25)", "3"="Small increase (< 0.25)",
+                                                                  "2"="Small decrease (< 0.25)", "1"="Big decrease (> 0.25)"))
 outclass_df <- data.frame(table(tdivtable$difpasout_class))
 # Reverse order
 outclass_df <- outclass_df[nrow(outclass_df):1, ]
@@ -140,3 +140,21 @@ ggplot(outclass_df, aes(x = "", y = Freq, fill = Var1)) +
   guides(fill = guide_legend(reverse=TRUE))
 
 #ggsave(file=paste(OUTtopodivfolder,"pie_topodivold.eps",sep=""))
+
+
+# 4.3 New PAs increase VS total increased area
+#tdivtable$outweighted <- tdivtable$difpas_out/tdivtable$patot
+# Plot PAs topdiv difference with available land, against total new PA
+tdiv_df <- data.frame(tdivtable)
+plot(log10(tdivtable$patot),tdivtable$difpas_out)
+
+ggplot(tdiv_df, aes(y=difpas_out, x=log10(patot)))+
+  geom_point(aes(size = countot, colour=counmean/1000)) + 
+  geom_text(data = subset(tdiv_df, difpas_out > 0.25 | difpas_out < -0.25), aes(label=country), size=4, hjust = -0.27)+
+  scale_size_continuous(range=c(1,20),
+                        name= expression("Country's total\nwild area (km"^2*")"), breaks=c(1e+3,1e+5,1e+7))+
+  scale_colour_viridis(name="Country's mean\ntopographic\ndiversity\n(at wild areas)")+
+  ylab("Difference in topodiv between new PAs and available land (-1 to 1)")+ 
+  xlab(expression("Area of new PAs (log(km"^2*"))"))
+  
+#ggsave(file=paste(OUTtopodivfolder,"scatter_outVSpaarea.eps",sep=""))
