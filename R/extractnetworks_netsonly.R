@@ -4,6 +4,7 @@
 # extract PAs networks and creates shapefiles to ingest to conefor in QGIS
 ##################################################################################################################
 
+
 library(rgdal)
 library(maptools)
 library(rgeos)
@@ -12,24 +13,26 @@ library(raster)
 
 # 1. INPUTS
 # Read country boundaries data (each piece of land is a different feature)
-INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
-INpasfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA/'
+#INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
+#INpasfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA/'
 
-OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks_till2010_dissolved500km/'
-#OUTconeforRfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_r/'
+INpasfile <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA_under1km/WDPA_cleaned_all_final'
+
+
+OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks_all_500km_simp100/'
+
 
 # 2. READ DATA
-#gadm <- readOGR(INgadmfolder, 'gadm36_0_simplify')
+# Read country boundaries data (each piece of land is a different feature)
 gadm <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_simplify')
 gadmmulti <-shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_multipart')
 gadmbuffer <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_500kmbuffer')
 
-pas <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/WDPA_under1km/WDPA_cleaned_till2010_big_dissolved_filled_simp')
+
+pas <- shapefile(INpasfile)
 
 
 # 3. MAIN ROUTINE
-pasnosea <- intersect(pas,gadm)
-
 
 pas@data$area <- area(pas)
 pas <- subset(pas,area>=1000000)
@@ -71,7 +74,7 @@ for (c in countrynames){
     
     
     # Leaves only attribute column
-    counpas <- counpas[,-(1:3)]
+    counpas <- counpas[,-(1:7)]
     
     # 3.1.2 Extract transboundary pas and add 0 attribute
     countrans <- subset(gadmbuffer, GID_0==c)
@@ -102,7 +105,7 @@ for (c in countrynames){
       # Adds attribute column (equal to zero)
       transbound@data$attribute <- rep(0,nrow(transbound@data))
       # Leaves only attribute column
-      transbound <- transbound[,-(1:3)]
+      transbound <- transbound[,-(1:7)]
     }
     
     # 3.1.3 Extract land portions and add 0 attribute

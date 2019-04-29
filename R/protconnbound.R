@@ -15,78 +15,84 @@ library(raster)
 
 # 0. FUNCTIONS
 # PCfun calculates PC using conefor software
-coneforpath <- paste(getwd(),"/coneforLinux64",sep="")
-
-PCfun <- function(attfile, disfile){
+PCfun <- function(attfile, disfile, countrycode){
   
-  #system("/home/lcarrasco/Documents/research/protectedareas/PACCproject/coneforLinux64")
-  
-  command <- paste(coneforpath,"-nodeFile", attfile,"-conFile",disfile, "-t dist all -confProb 200 0.5 -PC onlyoverall", collapse = ' ')
-  system(command)
+  command <- paste(coneforpath,"-nodeFile", attfile,"-conFile",disfile, "-t dist notall -confProb 10000 0.5 -PC onlyoverall -prefix", countrycode, collapse = ' ')
+  shell(command)
   
 }
 
 # 1. INPUTS
-INattfolder <- "/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_r/attributes/"
-INdisfolder <- "/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_r/distances/"
-INattfolder <- "/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_qgis/attribute/"
-INdisfolder <- "/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforfiles_qgis/distances/"
+# Set working directory where node/distances files are; conefor.exe should be placed here also.
+setwd("C:\\Users\\lcarrasc\\Documents\\research\\protectedareas\\analysis\\connectivity\\conefor_inputs_arcgis_fortest\\")
+
+# Output file name
+OUTfile <- "/protconnbound_till2010.txt"
 
 
 
 # 2. READ DATA
-#gadm <- readOGR(INgadmfolder, 'gadm36_0_simplify')
-gadm <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_simplify')
-
-pas <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/WDPA/WDPA_2011on_final')
-pastilldate <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/WDPA/WDPA_till2010_final')
-
-
+#gadm <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_simplify')
+gadm <- shapefile('C:\\Users\\lcarrasc\\Documents\\research\\chinese_infrastructures\\datasets\\GADM\\gadm36_0_simplify')
 
 
 # 3. MAIN ROUTINE
+
+# 3.1 Calculate PC index for all networks
+coneforpath <- paste(getwd(),"\\coneforWin64",sep="")
+system(coneforpath)
+shell(paste(coneforpath,"-nodeFile nodes_ -conFile distances_ -t dist notall -* -confProb 10000 0.5 -PC onlyoverall", collapse = ' '))
+
+# Read PC index results from conefor created file
+pctable <- read.table(paste(getwd(),"\\results_all_EC(PC).txt",sep = ""))
+
+
+# 3.2 Calculate ProtConn bound: looping through all countries
+
 countrynamesvec <- c()
 protconnboundvec <- c()
-# 3.0 Obtain number of countries and create loop
+protvec <- c()
+countryareavec <- c()
+
+# Obtain number of countries and create loop
 countrynames <- unique(gadm@data$GID_0)
 
 for (c in countrynames){
-  #Run only for countries with PAs and avoid ANT (antartica)
-  if(file.exists(paste(INattfolder,c,"firstnetworkatt.txt",sep = ""))){
+  # Run only for countries with PAs and avoid ANT (antartica)
+  if(paste(c,"firstnetwork.txt",sep = "") %in% pctable$V1){
   
-    # 3.1 Read network conefor files
-    attfile1st <- paste(INattfolder,c,"firstnetworka.txt",sep = "")
-    disfile1st <- paste(INdisfolder,c,"firstnetworkd.txt",sep = "")
-    attfile2nd <- paste(INattfolder,c,"secondnetworkatt.txt",sep = "")
-    disfile2nd <- paste(INdisfolder,c,"secondnetworkdis.txt",sep = "")
+    # 3.2.1 Reads PC
+    PC1st <- as.numeric(as.character(pctable[pctable$V1==paste(c,"firstnetwork.txt",sep = ""),4]))
+    PC2nd <- as.numeric(as.character(pctable[pctable$V1==paste(c,"secondnetwork.txt",sep = ""),4]))
     
-    # 3.2 Calculates PC (probability of connectivity) index with conefor for both networks
     
-    PC1st <- PCfun(attfile1st,disfile1st)
-    PC2nd <- PCfun(attfile2nd,disfile2nd)
     
-    # 3.3 Calculates ProtUnconn[Design] (Saura 2018 Appendix B.3)
+    # 3.2.2 Calculates ProtUnconn[Design] (Saura 2018 Appendix B.3)
     # Needs country area
     countryarea <- area(subset(gadm, GID_0==c))
     
-    protunconndes <- (100*(PC1st/countryarea)) - (100*(PC2nd/countryarea))
-    
+    protunconndes <- (100*(PC1st[1]/countryarea)) - (100*(PC2nd[1]/countryarea))
+
     # 3.4 Calculates ProtConnBound; ProtConnBound=Prot−ProtUnconn[Design]
     # Needs the total protected area of considered dataset
-    areatable <- read.table(attfile1st)
+    areatable <- read.table(paste("nodes_",c,"firstnetwork.txt",sep = ""))
     protarea <- sum(areatable[,2])
       
-    protconnbound <- (protarea/countryarea) - protunconndes
+    protconnbound <- 100*(protarea/countryarea) - protunconndes
     
     countrynamesvec <- append(countrynamesvec, c) 
     protconnboundvec <- append(protconnboundvec, protconnbound)
+    protvec <- append(protvec,100*(protarea/countryarea))
+    countryareavec <- append(countryareavec,countryarea)
   
   }
 }
 
 # 4. WRITE RESULTS
-protconnboundtable <- data.frame(countrynamesvec,protconnboundvec)
-colnames(protconnboundtable) <- c("country","protconnbound")
+protconnboundtable <- data.frame(countrynamesvec,protconnboundvec,protvec,countryareavec)
+colnames(protconnboundtable) <- c("country","protconnbound","prot","countryarea")
 
-#write.table(protconnboundtable, "/home/lcarrasco/Documents/research/protectedareas/connectivity/results/protconnboundtable.txt",
- #           row.names = F, col.names = F)
+write.table(protconnboundtable, paste(getwd(),OUTfile,sep=""),
+            row.names = F, col.names = T)
+
+
