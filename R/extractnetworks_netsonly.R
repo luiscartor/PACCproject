@@ -20,10 +20,10 @@ INgadmfile <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm3
 # Country boundaries where each piece of land is a different feature
 INgadmmultifile <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_multipart'
 # Country boundaries with a 500km buffer
-INgadmbufferfile <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_500kmbuffer'
+INgadmbufferfile <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_300kmbuffer'
 
 # Output folder for the networks
-OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks_all_500km_simp100/'
+OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks_all_300km/'
 
 
 # 2. READ DATA
@@ -42,7 +42,11 @@ gadmbuffer <- shapefile(INgadmbufferfile)
 pas@data$area <- area(pas)
 pas <- subset(pas,area>=1000000)
 
-# 3.0.2 Obtains number of countries and create loop
+# 3.0.2 Calculates area of each country piece of land and delete polygons <1km2
+gadmmulti@data$area <- area(gadmmulti)
+gadmmulti <- subset(gadmmulti,area>=1000000)
+
+# 3.0.3 Obtains number of countries and create loop
 countrynames <- unique(gadm@data$GID_0)
 
 for (c in countrynames){
@@ -88,7 +92,7 @@ for (c in countrynames){
     # Adds attribute column (equal to zero)
     counland@data$attribute <- rep(0,nrow(counland@data))
     # Leaves only attribute column
-    counland <- counland[,-(1:2)]
+    counland <- counland[,-(1:3)]
     
     
     # 3.1.4 Merges all polygons of first network and adds polygon ID
@@ -128,7 +132,3 @@ for (c in countrynames){
     
   }
 }
-
-
-
-

@@ -18,12 +18,12 @@ library(mapproj)
 
 # 1. INPUTS
 OUTtopodivfolder <- '/home/lcarrasco/Documents/research/protectedareas/topodiv/'
-INtopodivtable <- '/home/lcarrasco/Documents/research/protectedareas/topodiv/PAstopodivtable.txt'
+INtopodivtable <- '/home/lcarrasco/Documents/research/protectedareas/topodiv/PAstopodivtable_simp100.txt'
 
 INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
 INgadmfile <- 'gadm36_0_simplify'
 #INgadmfile <- 'gadm36_0_simplify_robinson_buff0'
-  l
+
 # 2. READ DATA
 tdivtable <- read.table(INtopodivtable,header = TRUE)
 gadm <- readOGR(INgadmfolder, INgadmfile)
@@ -150,7 +150,7 @@ plot(log10(tdivtable$patot),tdivtable$difpas_out)
 
 ggplot(tdiv_df, aes(y=difpas_out, x=log10(patot)))+
   geom_point(aes(size = countot, colour=counmean/1000)) + 
-  geom_text(data = subset(tdiv_df, difpas_out > 0.25 | difpas_out < -0.25), aes(label=country), size=4, hjust = -0.27)+
+  geom_text(data = subset(tdiv_df, difpas_out > 0.25 | difpas_out < -0.25), aes(label=GID_0), size=4, hjust = -0.27)+
   scale_size_continuous(range=c(1,20),
                         name= expression("Country's total\nwild area (km"^2*")"), breaks=c(1e+3,1e+5,1e+7))+
   scale_colour_viridis(name="Country's mean\ntopographic\ndiversity\n(at wild areas)")+

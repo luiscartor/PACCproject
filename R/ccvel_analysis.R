@@ -18,7 +18,7 @@ library(mapproj)
 
 # 1. INPUTS
 OUTccvelfolder <- '/home/lcarrasco/Documents/research/protectedareas/ccvel/'
-INccveltable <- '/home/lcarrasco/Documents/research/protectedareas/ccvel/PAsccveltable.txt'
+INccveltable <- '/home/lcarrasco/Documents/research/protectedareas/ccvel/PAsccveltable_simp100.txt'
 
 INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
 INgadmfile <- 'gadm36_0_simplify'
@@ -147,7 +147,7 @@ ggplot(outclass_df, aes(x = "", y = Freq, fill = Var1)) +
 # Plot PAs ccvel difference with available land, against total new PA
 ccvel_df <- data.frame(ccveltable)
 plot(log10(ccveltable$patot),ccveltable$difpas_out)
-
+l
 ggplot(ccvel_df, aes(y=difpas_out, x=log10(patot)))+
   geom_point(aes(size = countot, colour=counmean)) + 
   geom_text(data = subset(ccvel_df, difpas_out > 50 | difpas_out < -50), aes(label=GID_0), size=4, hjust = -0.27)+
