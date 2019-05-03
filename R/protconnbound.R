@@ -24,16 +24,17 @@ PCfun <- function(attfile, disfile, countrycode){
 
 # 1. INPUTS
 # Set working directory where node/distances files are; conefor.exe should be placed here also.
-setwd("C:\\Users\\lcarrasc\\Documents\\research\\protectedareas\\analysis\\connectivity\\conefor_inputs_arcgis_fortest\\")
+setwd("C:\\Users\\lcarrasc\\Documents\\research\\protectedareas\\analysis\\connectivity\\coneforinputs_allyears_300km\\")
 
 # Output file name
-OUTfile <- "/protconnbound_till2010.txt"
+OUTfile <- "\\protconnbound_allyears_test.txt"
 
-
+# GADM file path
+INgadm <- 'C:\\Users\\lcarrasc\\Documents\\research\\chinese_infrastructures\\datasets\\GADM\\gadm36_0_simplify'
 
 # 2. READ DATA
 #gadm <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_simplify')
-gadm <- shapefile('C:\\Users\\lcarrasc\\Documents\\research\\chinese_infrastructures\\datasets\\GADM\\gadm36_0_simplify')
+gadm <- shapefile(INgadm)
 
 
 # 3. MAIN ROUTINE
