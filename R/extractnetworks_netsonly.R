@@ -14,7 +14,7 @@ library(raster)
 # 1. INPUTS
 
 # Protected areas file (for all years: WDPA_cleaned_all_final, or until 2010: WDPA_cleaned_till2010_final)
-INpasfile <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA_under1km/WDPA_cleaned_all_final'
+INpasfile <- '/home/lcarrasco/Documents/research/protectedareas/data/WDPA_under1km/WDPA_cleaned_till2010_final'
 # Country boundaries
 INgadmfile <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_simplify'
 # Country boundaries where each piece of land is a different feature
@@ -23,7 +23,7 @@ INgadmmultifile <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/
 INgadmbufferfile <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_300kmbuffer'
 
 # Output folder for the networks
-OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks_all_300km/'
+OUTnetworkfolder <- '/home/lcarrasco/Documents/research/protectedareas/connectivity/networks_till2010_300km/'
 
 
 # 2. READ DATA

@@ -19,32 +19,34 @@ PCfun <- function(attfile, disfile, countrycode){
   
   command <- paste(coneforpath,"-nodeFile", attfile,"-conFile",disfile, "-t dist notall -confProb 10000 0.5 -PC onlyoverall -prefix", countrycode, collapse = ' ')
   shell(command)
-  
 }
 
 # 1. INPUTS
 # Set working directory where node/distances files are; conefor.exe should be placed here also.
-setwd("C:\\Users\\lcarrasc\\Documents\\research\\protectedareas\\analysis\\connectivity\\conefor_inputs_arcgis_fortest\\")
+setwd("/home/lcarrasco/Documents/research/protectedareas/connectivity/coneforinputs_allyears_test")
+
+# GADM data file path
+INgadm <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_simplify'
 
 # Output file name
-OUTfile <- "/protconnbound_till2010.txt"
+OUTfile <- "/protconnbound_allyears_test.txt"
 
 
 
 # 2. READ DATA
-#gadm <- shapefile('/home/lcarrasco/Documents/research/protectedareas/data/GADM/gadm36_0_simplify')
-gadm <- shapefile('C:\\Users\\lcarrasc\\Documents\\research\\chinese_infrastructures\\datasets\\GADM\\gadm36_0_simplify')
+gadm <- shapefile(INgadm)
+
 
 
 # 3. MAIN ROUTINE
 
 # 3.1 Calculate PC index for all networks
-coneforpath <- paste(getwd(),"\\coneforWin64",sep="")
+coneforpath <- paste(getwd(),"/coneforWin64",sep="")
 system(coneforpath)
 shell(paste(coneforpath,"-nodeFile nodes_ -conFile distances_ -t dist notall -* -confProb 10000 0.5 -PC onlyoverall", collapse = ' '))
 
 # Read PC index results from conefor created file
-pctable <- read.table(paste(getwd(),"\\results_all_EC(PC).txt",sep = ""))
+pctable <- read.table(paste(getwd(),"/results_all_EC(PC).txt",sep = ""))
 
 
 # 3.2 Calculate ProtConn bound: looping through all countries

@@ -16,17 +16,23 @@ library(scales)
 library(broom)
 library(mapproj)
 
+
 # 1. INPUTS
 OUTccvelfolder <- '/home/lcarrasco/Documents/research/protectedareas/ccvel/'
-INccveltable <- '/home/lcarrasco/Documents/research/protectedareas/ccvel/PAsccveltable_simp100.txt'
+INccveltable <- '/home/lcarrasco/Documents/research/protectedareas/ccvel/PAsccveltable.txt'
 
 INgadmfolder <- '/home/lcarrasco/Documents/research/protectedareas/data/GADM/'
 INgadmfile <- 'gadm36_0_simplify'
 #INgadmfile <- 'gadm36_0_simplify_robinson_buff0'
 
+INgdpfile <- '/home/lcarrasco/Documents/research/protectedareas/data/GDP/IMF_GDPPPP_Data.csv'
+
 # 2. READ DATA
 ccveltable <- read.table(INccveltable,header = TRUE)
 gadm <- readOGR(INgadmfolder, INgadmfile)
+
+gdp <- read.csv2(INgdpfile, header = TRUE, sep=",", stringsAsFactors=FALSE)
+
 
 # 3. ANALYSIS
 # Creates column with difference between PAs ccvel mean and outside
@@ -158,3 +164,32 @@ ggplot(ccvel_df, aes(y=difpas_out, x=log10(patot)))+
   xlab(expression("Area of new PAs (log(km"^2*"))"))
 
 #ggsave(file=paste(OUTccvelfolder,"scatter_outVSpaarea.eps",sep=""))
+
+
+# 4.4 GDP analysis
+for(i in 2:ncol(gdp)){gdp[,i]<-as.numeric(gdp[,i])}
+
+# Obtain gpd average from 2011 to 2017
+gdp$gdpave <- rowMeans(gdp[,c(12:18)],na.rm=TRUE)
+
+# Merge to ccvel data
+ccvel_df <- merge(ccvel_df, gdp[, c("GID_0", "gdpave")], by="GID_0")
+
+# Plot
+ggplot(ccvel_df, aes(y=difpas_out, x=gdpave))+
+  geom_point(aes(size = countot, colour=counmean)) + 
+  geom_text(data = subset(ccvel_df, difpas_out > 50 | difpas_out < -50), aes(label=GID_0), size=4, hjust = -0.27)+
+  scale_size_continuous(range=c(1,20),
+                        name= expression("Country's total\nwild area (km"^2*")"), breaks=c(1e+3,1e+5,1e+7))+
+  scale_colour_viridis(name="Country's mean\nClimate Change\nvelocity (km/year)\n(at wild areas)")+
+  ylab("Difference in CCvel between new PAs and available land (km/year)")+ 
+  xlab(expression("Average (2011-2017) nominal GDP (billion dollars)"))
+
+#ggsave(file=paste(OUTccvelfolder,"scatter_outVSpaarea.eps",sep=""))
+
+lm <- lm(ccvel_df$difpas_out ~ ccvel_df$gdpave +  ccvel_df$patot + ccvel_df$counmean + ccvel_df$countot)
+summary(lm)
+
+
+
+
