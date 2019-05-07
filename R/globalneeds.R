@@ -43,6 +43,11 @@ gadm <- readOGR(INgadmfolder, INgadmfile)
 
 
 # 3. ANALYSIS
+# Difference between ccvel inside PAs and country mean
+ccveltable$pacoundiff <- (((ccveltable$oldpamean*ccveltable$oldpatot)+(ccveltable$pamean*ccveltable$patot))
+                         /(ccveltable$oldpatot+ccveltable$patot))-ccveltable$counmean
+
+
 needs <- data.frame()
 
 needs$country <- ccveltable$country
