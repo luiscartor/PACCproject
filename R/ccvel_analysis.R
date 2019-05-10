@@ -46,7 +46,7 @@ ccveltable$relcoundif <- ccveltable$difpas_out/(ccveltable$counmean)
 
 # Add columns to gadm
 colnames(ccveltable)[1] <- "GID_0"
-gadm@data <- merge(gadm@data,ccveltable[,c("GID_0","difpas_out","difpas_coun","difpas_old")],all.x=TRUE)
+gadm@data <- merge(gadm@data,ccveltable[,c("GID_0","difpas_out","difpas_coun","difpas_old","reldif","relcoundif")],all.x=TRUE)
 
 
 
