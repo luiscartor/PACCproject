@@ -14,6 +14,7 @@ library(plyr)
 library(scales)
 library(broom)
 library(mapproj)
+library(shades)
 
 
 # 1. INPUTS

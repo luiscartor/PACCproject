@@ -15,6 +15,7 @@ library(plyr)
 library(scales)
 library(broom)
 library(mapproj)
+library(shades)
 
 
 # 1. INPUTS
@@ -40,6 +41,9 @@ ccveltable$difpas_out <- (ccveltable$pamean - ccveltable$outpamean)
 ccveltable$difpas_coun <- (ccveltable$pamean - ccveltable$counmean)
 ccveltable$difpas_old <- (ccveltable$pamean - ccveltable$oldpamean)
 
+ccveltable$reldif <- ccveltable$difpas_out/(ccveltable$outpamean)
+ccveltable$relcoundif <- ccveltable$difpas_out/(ccveltable$counmean)
+
 # Add columns to gadm
 colnames(ccveltable)[1] <- "GID_0"
 gadm@data <- merge(gadm@data,ccveltable[,c("GID_0","difpas_out","difpas_coun","difpas_old")],all.x=TRUE)
@@ -59,17 +63,17 @@ gadm_df <- join(gadm_df, gadm@data, by="id")
 
 # Plot ccvel against available lands
 ggplot(gadm_df) +
-  geom_polygon(aes(long, lat, group=group, fill = difpas_out), color="white",size=0.15) +
+  geom_polygon(aes(long, lat, group=group, fill = reldif), color="white",size=0.15) +
   scale_fill_viridis(option = 'magma',trans='reverse')+ 
-  labs(fill = "Difference in\nclimate change\nvelocity (log(km/yr))")+
-  ggtitle("Climate change velocity mean decrease between new PAs and available land", 
+  labs(fill = "Adjusted \ndifference in\nclimate change\nvelocity (log(km/yr))")+
+  ggtitle("Climate change velocity adjusted mean decrease between new PAs and available land", 
           subtitle = "Difference in mean CCvel between PAs established after Aichi Targets and available land, excluding already protected land")+
   theme_bw()+
   theme(axis.line=element_blank(),axis.text.x=element_blank(),axis.text.y=element_blank(),axis.ticks=element_blank(),
         axis.title.x=element_blank(),axis.title.y=element_blank(),panel.border = element_blank(),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-#ggsave(file=paste(OUTccvelfolder,"map_ccvelout.eps",sep=""))
+#ggsave(file=paste(OUTccvelfolder,"map_ccvelout_adjusted.eps",sep=""))
 
 # Plot ccvel against previous pas
 ggplot(gadm_df) +
